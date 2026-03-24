@@ -22,18 +22,14 @@ import java.util.Arrays;
 
 /**
  * PAKET: com.oldworld.demo.security
- * DOSYA ADI: SecurityConfig.java  (mevcut dosyanın yerini alır)
- *
- * DEĞİŞİKLİKLER:
- *   1. @EnableMethodSecurity eklendi  → @PreAuthorize çalışması için şart
- *   2. /api/admin/** rotaları authenticated olarak işaretlendi
- *      (rol kontrolü @PreAuthorize ile controller'da yapılıyor)
- *   3. CORS'a "null" origin eklendi    → dosyadan açılan HTML için
- *   4. /api/orders/my-orders/** public değil, authenticated yapıldı
+ * DOSYA ADI: SecurityConfig.java
+ * * GÜNCELLEMELER:
+ * 1. Netlify production URL'si eklendi.
+ * 2. Render ana dizin (/) erişimi permitAll yapıldı (403 hatasını önlemek için).
  */
 @Configuration
 @RequiredArgsConstructor
-@EnableMethodSecurity   // ← YENİ: @PreAuthorize anotasyonlarını aktif eder
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -61,11 +57,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // GÜNCELLEME: Netlify adresin eklendi
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:3000",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
-            "null"   // ← YENİ: dosyadan (file://) açılan HTML için
+            "https://oldworld-product.netlify.app", 
+            "null"
         ));
         configuration.setAllowedMethods(Arrays.asList(
             "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
@@ -90,16 +88,19 @@ public class SecurityConfig {
                 // OPTIONS isteklerini her zaman geçir (CORS preflight)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                // GÜNCELLEME: Ana dizin ve hata sayfalarını herkese aç (403 Forbidden almamak için)
+                .requestMatchers("/", "/error", "/favicon.ico").permitAll()
+
                 // Auth endpoint'leri herkese açık
                 .requestMatchers("/auth/**", "/api/auth/**").permitAll()
 
                 // H2 konsol (sadece geliştirme ortamında!)
-                .requestMatchers("/h2-console/**", "/error").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
 
-                // Ürün listeleme/detay herkese açık, yazma işlemleri auth gerektirir
+                // Ürün listeleme/detay herkese açık
                 .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
 
-                // Admin & kullanıcı yönetimi — authenticated (rol kontrolü @PreAuthorize'da)
+                // Admin & kullanıcı yönetimi — authenticated
                 .requestMatchers("/api/admin/**").authenticated()
 
                 // Siparişler, profil güncellemeleri — login gerektirir
