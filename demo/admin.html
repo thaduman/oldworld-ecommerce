@@ -498,22 +498,12 @@ function bindEvents(){
   };
 }
 
-if(state.user && state.token){
-  const role = state.user.role || '';
-  const hasAccess = role.includes('ADMIN') || role.includes('SELLER');
-  
-  if (!hasAccess) {
-    // Yetkisiz erişim denemesi: Kullanıcıyı uyar ve ana sayfaya at
-    alert("Bu alana erişim yetkiniz bulunmamaktadır!");
-    window.location.href = 'index.html';
-  } else {
-    const rem = state.tokenExpiry - Date.now();
-    if (rem > 0) loadDashboard();
-    else logout();
-  }
-} else { 
-  render(); 
-}
+// INIT — eğer daha önce giriş yapılmışsa direkt panele git
+if(state.user&&state.token){
+  const rem=state.tokenExpiry-Date.now();
+  if(rem>0) loadDashboard();
+  else logout();
+} else { render(); }
 </script>
 </body>
 </html>

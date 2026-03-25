@@ -309,36 +309,18 @@ function changeQty(id,delta){
 function cartTotal(){return state.cart.reduce((s,i)=>s+i.price*i.qty,0);}
 function cartCount(){return state.cart.reduce((s,i)=>s+i.qty,0);}
 
-function getFiltered() {
-  let list = [...state.products];
-
-  // 1. Önce Kategori Kısıtlaması (Eğer 'Tümü' değilse listeyi baştan daraltır)
-  if (state.filterCat !== 'Tümü') {
-    list = list.filter(p => p.category === state.filterCat);
+function getFiltered(){
+  let list=[...state.products];
+  if(state.searchQuery.trim()){
+    const q=state.searchQuery.toLowerCase();
+    list=list.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.description||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q));
   }
-
-  // 2. Sonra Arama Sorgusu (Sadece İsim ve Açıklamada arar, Kategoriyi bozmaz)
-  if (state.searchQuery.trim()) {
-    const q = state.searchQuery.toLowerCase();
-    list = list.filter(p => 
-      (p.name || '').toLowerCase().includes(q) || 
-      (p.description || '').toLowerCase().includes(q)
-    );
-  }
-
-  // 3. Fiyat Aralıkları
-  if (state.priceMin !== '') {
-    list = list.filter(p => parseFloat(p.price) >= parseFloat(state.priceMin));
-  }
-  if (state.priceMax !== '') {
-    list = list.filter(p => parseFloat(p.price) <= parseFloat(state.priceMax));
-  }
-
-  // 4. Sıralama Mantığı
-  if (state.sortBy === 'price-asc') list.sort((a, b) => a.price - b.price);
-  else if (state.sortBy === 'price-desc') list.sort((a, b) => b.price - a.price);
-  else if (state.sortBy === 'name-asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  
+  if(state.filterCat!=='Tümü') list=list.filter(p=>p.category===state.filterCat);
+  if(state.priceMin!=='') list=list.filter(p=>parseFloat(p.price)>=parseFloat(state.priceMin));
+  if(state.priceMax!=='') list=list.filter(p=>parseFloat(p.price)<=parseFloat(state.priceMax));
+  if(state.sortBy==='price-asc') list.sort((a,b)=>a.price-b.price);
+  else if(state.sortBy==='price-desc') list.sort((a,b)=>b.price-a.price);
+  else if(state.sortBy==='name-asc') list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   return list;
 }
 
@@ -359,14 +341,6 @@ function render(){
 }
 
 function renderNav(){
-  // Yetki Kontrolü: Kullanıcı var mı ve rolü ADMIN veya SELLER mi?
-  const isAdminOrSeller = state.user && (
-    state.user.role === 'ADMIN' || 
-    state.user.role === 'SELLER' || 
-    state.user.role === 'ROLE_ADMIN' || 
-    state.user.role === 'ROLE_SELLER'
-  );
-
   return `
   <nav>
     <div class="nav-logo" onclick="navigate('home')">OLD <span>World</span></div>
@@ -374,9 +348,6 @@ function renderNav(){
       <button class="nav-link ${state.page==='home'?'active':''}" onclick="navigate('home')">Koleksiyon</button>
       ${state.user?`<button class="nav-link ${state.page==='orders'?'active':''}" onclick="navigate('orders')">Siparişlerim</button>`:''}
       ${state.user?`<button class="nav-link ${state.page==='profile'?'active':''}" onclick="navigate('profile')">Profil</button>`:''}
-      
-      ${isAdminOrSeller ? `<button class="nav-link" onclick="window.location.href='admin.html'" style="color:var(--gold-light); font-weight:bold;">Yönetim Paneli</button>` : ''}
-      
       ${state.user?`<button class="nav-link" onclick="logout()">Çıkış</button>`:`<button class="nav-link" onclick="openAuth('login')">Giriş</button>`}
       <button class="cart-btn" onclick="toggleCart()">🧺 <span>Sepet</span> ${cartCount()>0?`<span class="cart-badge">${cartCount()}</span>`:''}</button>
     </div>
@@ -386,9 +357,6 @@ function renderNav(){
     <button class="nav-link" onclick="navigate('home');toggleMobileMenu()">Koleksiyon</button>
     ${state.user?`<button class="nav-link" onclick="navigate('orders');toggleMobileMenu()">Siparişlerim</button>`:''}
     ${state.user?`<button class="nav-link" onclick="navigate('profile');toggleMobileMenu()">Profil</button>`:''}
-    
-    ${isAdminOrSeller ? `<button class="nav-link" onclick="window.location.href='admin.html'">Yönetim Paneli</button>` : ''}
-    
     ${state.user?`<button class="nav-link" onclick="logout()">Çıkış Yap</button>`:`<button class="nav-link" onclick="openAuth('login');toggleMobileMenu()">Giriş Yap</button>`}
   </div>`;
 }
